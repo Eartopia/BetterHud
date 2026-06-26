@@ -77,8 +77,14 @@ object PlayerManagerImpl : BetterHudManager, PlayerManager {
     override fun end() {
         val list = ArrayList(playerMap.values)
         playerMap.clear()
+        stringPlayer.clear()
         list.forEach {
-            it.save()
+            runCatching {
+                it.cancel()
+            }
+            runCatching {
+                it.save()
+            }
         }
     }
 }

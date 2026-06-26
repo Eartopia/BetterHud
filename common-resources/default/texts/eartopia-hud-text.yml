@@ -1,0 +1,4 @@
+eartopia_hud_text:
+  merge-default-bitmap: true
+  use-unifont: true
+  include: []

@@ -106,7 +106,7 @@ class NMSImpl : NMS {
     }
 
     override fun removeBossBar(player: HudPlayer) {
-        bossBarMap.remove(player.uuid())
+        bossBarMap.remove(player.uuid())?.remove()
     }
 
     override fun getVersion(): NMSVersion {
@@ -281,6 +281,50 @@ class NMSImpl : NMS {
             val bossBar = HudBossBar(uuid, component, color)
             last = bossBar
             listener.send(ClientboundBossEventPacket.createUpdateNamePacket(bossBar))
+        }
+
+        private fun sendOriginalBossbar(targetUUID: UUID, targetBuf: HudByteBuf) {
+            listener.send(createBossBar(HudByteBuf(Unpooled.buffer(1 shl 4))
+                .writeUUID(targetUUID)
+                .writeEnum(operationEnum[0])
+                .writeComponent(targetBuf.readComponentTrusted())
+                .writeFloat(targetBuf.readFloat())
+                .writeEnum(targetBuf.readEnum(BossEvent.BossBarColor::class.java))
+                .writeEnum(targetBuf.readEnum(BossEvent.BossBarOverlay::class.java))
+                .writeByte(targetBuf.readUnsignedByte().toInt())
+            ))
+        }
+
+        fun remove() {
+            runCatching {
+                listener.send(ClientboundBossEventPacket.createRemovePacket(uuid))
+                if (onUse.first != uuid) {
+                    runCatching {
+                        sendOriginalBossbar(onUse.first, HudByteBuf(onUse.second.unwrap()))
+                    }
+                }
+                val remappedDummyBars = dummyBarHandleMap.values.map { it.hud.uuid }.toHashSet()
+                dummyBarHandleMap.values.forEach { cache ->
+                    listener.send(ClientboundBossEventPacket.createRemovePacket(cache.hud.uuid))
+                    runCatching {
+                        sendOriginalBossbar(cache.cacheUUID, HudByteBuf(cache.buf.unwrap()))
+                    }
+                }
+                dummy.dummyBars.forEach {
+                    if (!remappedDummyBars.contains(it.uuid)) {
+                        listener.send(ClientboundBossEventPacket.createRemovePacket(it.uuid))
+                    }
+                }
+                dummyBarHandleMap.clear()
+                otherBarCache.clear()
+                BetterHudAPI.inst().playerManager.getHudPlayer(player.uniqueId)?.additionalComponent = null
+            }
+            runCatching {
+                val pipeline = getConnection(listener).channel.pipeline()
+                if (pipeline.get(INJECT_NAME) === this) {
+                    pipeline.remove(INJECT_NAME)
+                }
+            }
         }
 
         private fun writeBossBar(buf: HudByteBuf, ctx: ChannelHandlerContext?, msg: Any?, promise: ChannelPromise?) {

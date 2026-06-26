@@ -5,7 +5,7 @@ debug-level: assets
 metrics: true
 version-check: true
 number-format: "#,###.#"
-tick-speed: 1
+tick-speed: 2
 namespace: "betterhud"
 default-font-name: "font.ttf"
 bossbar-line: 1
@@ -21,8 +21,7 @@ self-host-ip: "*"
 self-host-port: 8163
 merge-other-folders: []
 loading-head: random #steve, alex, etc.
-default-hud:
-  - test_hud
+default-hud: []
 default-popup: []
 default-compass: []
 load-minecraft-default-textures: false

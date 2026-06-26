@@ -43,7 +43,7 @@ object ConfigManagerImpl : BetterHudManager, ConfigManager {
         private set
     var defaultFontName = "font.ttf"
         private set
-    var tickSpeed = 1L
+    var tickSpeed = 2L
         private set
     var disableToBedrockPlayer = true
         private set
@@ -149,7 +149,7 @@ object ConfigManagerImpl : BetterHudManager, ConfigManager {
                     "Unable to find this pack type: $it"
                 }
             }
-            tickSpeed = yaml.getAsLong("tick-speed", 1)
+            tickSpeed = yaml.getAsLong("tick-speed", 2)
             numberFormat = yaml["number-format"]?.asString()?.let {
                 runCatching {
                     DecimalFormat(it)

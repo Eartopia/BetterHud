@@ -145,12 +145,21 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
         if (task.isNotEmpty()) {
             val syncTask = ArrayList<PlaceholderTask>()
             task.forEach {
-                if (it.async) it(player) else syncTask.add(it)
+                if (it.async && !isFolia) it(player) else syncTask.add(it)
             }
             if (syncTask.isEmpty()) return
-            task(player.location()) {
-                syncTask.forEach {
-                    it(player)
+            val handle = player.handle()
+            if (isFolia && handle is Player) {
+                handle.scheduler.execute(this@BukkitBootstrapImpl, {
+                    syncTask.forEach {
+                        it(player)
+                    }
+                }, null, 1L)
+            } else {
+                task(player.location()) {
+                    syncTask.forEach {
+                        it(player)
+                    }
                 }
             }
         }
@@ -212,7 +221,7 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
         if (pluginManager.isPluginEnabled("GPS")) PlayerManagerImpl.addLocationProvider(GPSLocationProvider())
         pluginManager.registerEvents(object : Listener {
             @EventHandler(priority = EventPriority.HIGHEST)
-            fun PlayerJoinEvent.join() {
+            fun PlayerJoinEvent.handleJoin() {
                 register(player)
             }
             @EventHandler
@@ -275,9 +284,14 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
     }
 
     override fun onDisable() {
+        HandlerList.unregisterAll(this)
         core.end()
+        Bukkit.getGlobalRegionScheduler().cancelTasks(this)
+        Bukkit.getAsyncScheduler().cancelTasks(this)
+        if (!isFolia) Bukkit.getScheduler().cancelTasks(this)
         audiences.close()
         metrics?.shutdown()
+        BetterHudAPI.clear(core)
         log.info("Plugin disabled.")
     }
 

@@ -34,4 +34,15 @@ public final class BetterHudAPI {
         if (main != null) throw new RuntimeException();
         main = instance;
     }
+
+    /**
+     * Clears the main instance during plugin shutdown.
+     * @param instance instance that owns the current API binding
+     */
+    @ApiStatus.Internal
+    public static void clear(@NotNull BetterHud instance) {
+        if (main == instance) {
+            main = null;
+        }
+    }
 }

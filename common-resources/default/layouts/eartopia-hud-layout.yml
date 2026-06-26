@@ -1,0 +1,14 @@
+eartopia_hud_notice:
+  texts:
+    1:
+      name: eartopia_hud_text
+      pattern: "[string:eartopia_hud_message]"
+      x: 0
+      y: 0
+      scale: 0.75
+      align: left
+      color: "#F7F4EA"
+      line: 2
+      split-width: 240
+      line-width: 14
+      force-split: true

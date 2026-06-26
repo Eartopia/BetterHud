@@ -1,0 +1,23 @@
+eartopia_hud_notice:
+  group: eartopia_hud_notice
+  unique: true
+  push: true
+  key-mapping: true
+  sort: last
+  frame-type: local
+  tick: 1
+  move:
+    duration: 2
+    pixel:
+      x-equation: 0
+      y-equation: 0
+  layouts:
+    1:
+      name: eartopia_hud_notice
+      gui:
+        x: 100
+        y: 0
+      pixel:
+        x: -310
+        y: 36
+  duration: 320

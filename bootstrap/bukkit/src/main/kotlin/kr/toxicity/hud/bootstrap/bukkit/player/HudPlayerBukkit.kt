@@ -1,11 +1,13 @@
 package kr.toxicity.hud.bootstrap.bukkit.player
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import kr.toxicity.hud.api.adapter.LocationWrapper
 import kr.toxicity.hud.api.adapter.WorldWrapper
+import kr.toxicity.hud.api.scheduler.HudTask
 import kr.toxicity.hud.bootstrap.bukkit.BukkitBootstrapImpl
 import kr.toxicity.hud.player.HudPlayerImpl
 import kr.toxicity.hud.util.BOOTSTRAP
-import kr.toxicity.hud.util.asyncTaskLater
+import kr.toxicity.hud.util.taskLater
 import net.kyori.adventure.audience.Audience
 import org.bukkit.Bukkit
 import org.bukkit.boss.BossBar
@@ -46,6 +48,14 @@ class HudPlayerBukkit(
         (BOOTSTRAP as BukkitBootstrapImpl).update(this)
     }
 
+    override fun hudUpdateTask(speed: Long, block: () -> Unit): HudTask {
+        return foliaPlayerTaskTimer(1, speed, block) ?: super.hudUpdateTask(speed, block)
+    }
+
+    override fun hudLocationProvideTask(speed: Long, block: () -> Unit): HudTask {
+        return foliaPlayerTaskTimer(speed, speed, block) ?: super.hudLocationProvideTask(speed, block)
+    }
+
     override fun reload() {
         initBossBar {
             super.reload()
@@ -69,7 +79,7 @@ class HudPlayerBukkit(
             }
         }
         action()
-        asyncTaskLater(20) {
+        playerTaskLater(20) {
             bars.forEach {
                 it.addPlayer(player)
             }
@@ -77,4 +87,35 @@ class HudPlayerBukkit(
     }
 
     override fun hasPermission(perm: String): Boolean = player.hasPermission(perm)
+
+    private fun foliaPlayerTaskTimer(delay: Long, period: Long, block: () -> Unit): HudTask? {
+        val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
+        if (!bootstrap.isFolia()) {
+            return null
+        }
+        return player.scheduler.runAtFixedRate(bootstrap, {
+            block()
+        }, null, delay, period).wrap()
+    }
+
+    private fun playerTaskLater(delay: Long, block: () -> Unit) {
+        val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
+        if (bootstrap.isFolia()) {
+            player.scheduler.runDelayed(bootstrap, {
+                block()
+            }, null, delay)
+            return
+        }
+        taskLater(delay, block)
+    }
+
+    private fun ScheduledTask.wrap() = object : HudTask {
+        override fun isCancelled(): Boolean {
+            return this@wrap.isCancelled
+        }
+
+        override fun cancel() {
+            this@wrap.cancel()
+        }
+    }
 }

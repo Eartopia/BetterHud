@@ -10,6 +10,7 @@ import kr.toxicity.hud.api.player.HudPlayerHead
 import kr.toxicity.hud.api.player.PointedLocation
 import kr.toxicity.hud.api.popup.PopupIteratorGroup
 import kr.toxicity.hud.api.popup.PopupUpdater
+import kr.toxicity.hud.api.scheduler.HudTask
 import kr.toxicity.hud.manager.*
 import kr.toxicity.hud.util.*
 import net.kyori.adventure.bossbar.BossBar
@@ -23,6 +24,7 @@ abstract class HudPlayerImpl : HudPlayer {
     private var tick = 0L
     private var last: WidthComponent = EMPTY_WIDTH_COMPONENT
     private var additionalComp: WidthComponent? = null
+    private var showingEmpty = true
     private val variable = ConcurrentHashMap<String, String>()
     private val popupGroup = ConcurrentHashMap<String, PopupIteratorGroup>()
     private val popupKey = ConcurrentHashMap<Any, PopupUpdater>()
@@ -34,7 +36,7 @@ abstract class HudPlayerImpl : HudPlayer {
 
     private val task = HudPlayerTask {
         val speed = ConfigManagerImpl.tickSpeed
-        if (speed > 0) asyncTaskTimer(1, speed) {
+        if (speed > 0) hudUpdateTask(speed) {
             update()
         } else null
     }
@@ -44,9 +46,18 @@ abstract class HudPlayerImpl : HudPlayer {
         }
     }
     private val locationProvide = HudPlayerTask {
-        asyncTaskTimer(ConfigManagerImpl.locationProvideTime, ConfigManagerImpl.locationProvideTime) {
+        val speed = ConfigManagerImpl.locationProvideTime
+        hudLocationProvideTask(speed) {
             PlayerManagerImpl.provideLocation(this)
         }
+    }
+
+    protected open fun hudUpdateTask(speed: Long, block: () -> Unit): HudTask {
+        return asyncTaskTimer(1, speed, block)
+    }
+
+    protected open fun hudLocationProvideTask(speed: Long, block: () -> Unit): HudTask {
+        return asyncTaskTimer(speed, speed, block)
     }
 
     protected fun inject() {
@@ -137,7 +148,11 @@ abstract class HudPlayerImpl : HudPlayer {
             last = comp.finalizeFont()
 
             VOLATILE_CODE.showBossBar(this, color ?: ShaderManagerImpl.barColor, comp.component.build().compact())
-        } else VOLATILE_CODE.showBossBar(this, color ?: ShaderManagerImpl.barColor, EMPTY_COMPONENT)
+            showingEmpty = false
+        } else if (!showingEmpty) {
+            VOLATILE_CODE.showBossBar(this, color ?: ShaderManagerImpl.barColor, EMPTY_COMPONENT)
+            showingEmpty = true
+        }
     }
 
     override fun reload() {
@@ -164,6 +179,7 @@ abstract class HudPlayerImpl : HudPlayer {
             it.value.clear()
         }
         VOLATILE_CODE.removeBossBar(this)
+        showingEmpty = true
         cancelTick()
         autoSave.cancel()
         locationProvide.cancel()
