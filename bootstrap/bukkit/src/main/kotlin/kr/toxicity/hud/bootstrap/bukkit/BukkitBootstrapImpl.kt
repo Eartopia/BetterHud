@@ -26,6 +26,7 @@ import kr.toxicity.hud.bootstrap.bukkit.player.head.SkinsRestorerSkinProvider
 import kr.toxicity.hud.bootstrap.bukkit.player.location.GPSLocationProvider
 import kr.toxicity.hud.bootstrap.bukkit.util.bukkitPlayer
 import kr.toxicity.hud.bootstrap.bukkit.util.call
+import kr.toxicity.hud.bootstrap.bukkit.util.FoliaSchedulerReflection
 import kr.toxicity.hud.bootstrap.bukkit.util.registerListener
 import kr.toxicity.hud.manager.*
 import kr.toxicity.hud.pack.PackUploader
@@ -149,12 +150,12 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
             }
             if (syncTask.isEmpty()) return
             val handle = player.handle()
-            if (isFolia && handle is Player) {
-                handle.scheduler.execute(this@BukkitBootstrapImpl, {
+            if (isFolia && handle is Player && FoliaSchedulerReflection.execute(this@BukkitBootstrapImpl, handle, 1L) {
                     syncTask.forEach {
                         it(player)
                     }
-                }, null, 1L)
+                }) {
+                return
             } else {
                 task(player.location()) {
                     syncTask.forEach {
@@ -286,9 +287,11 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
     override fun onDisable() {
         HandlerList.unregisterAll(this)
         core.end()
-        Bukkit.getGlobalRegionScheduler().cancelTasks(this)
-        Bukkit.getAsyncScheduler().cancelTasks(this)
-        if (!isFolia) Bukkit.getScheduler().cancelTasks(this)
+        if (isFolia) {
+            FoliaSchedulerReflection.cancelGlobalAndAsyncTasks(this)
+        } else {
+            Bukkit.getScheduler().cancelTasks(this)
+        }
         audiences.close()
         metrics?.shutdown()
         BetterHudAPI.clear(core)

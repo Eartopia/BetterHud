@@ -1,10 +1,10 @@
 package kr.toxicity.hud.bootstrap.bukkit.player
 
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import kr.toxicity.hud.api.adapter.LocationWrapper
 import kr.toxicity.hud.api.adapter.WorldWrapper
 import kr.toxicity.hud.api.scheduler.HudTask
 import kr.toxicity.hud.bootstrap.bukkit.BukkitBootstrapImpl
+import kr.toxicity.hud.bootstrap.bukkit.util.FoliaSchedulerReflection
 import kr.toxicity.hud.player.HudPlayerImpl
 import kr.toxicity.hud.util.BOOTSTRAP
 import kr.toxicity.hud.util.taskLater
@@ -93,29 +93,14 @@ class HudPlayerBukkit(
         if (!bootstrap.isFolia()) {
             return null
         }
-        return player.scheduler.runAtFixedRate(bootstrap, {
-            block()
-        }, null, delay, period).wrap()
+        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, player, delay, period, block)
     }
 
     private fun playerTaskLater(delay: Long, block: () -> Unit) {
         val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
-        if (bootstrap.isFolia()) {
-            player.scheduler.runDelayed(bootstrap, {
-                block()
-            }, null, delay)
+        if (bootstrap.isFolia() && FoliaSchedulerReflection.runDelayed(bootstrap, player, delay, block)) {
             return
         }
         taskLater(delay, block)
-    }
-
-    private fun ScheduledTask.wrap() = object : HudTask {
-        override fun isCancelled(): Boolean {
-            return this@wrap.isCancelled
-        }
-
-        override fun cancel() {
-            this@wrap.cancel()
-        }
     }
 }
