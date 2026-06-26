@@ -171,7 +171,7 @@ object ShaderManagerImpl : BetterHudManager, ShaderManager {
     }
 
     private fun loadShaders(overlay: PackOverlay): List<Pair<String, ByteArray>> {
-        constants["SHADER_VERSION"] = overlay.ordinal.toString()
+        constants["SHADER_VERSION"] = overlay.shaderVersion.toString()
         val shaders = ShaderType.entries.map {
             it to it.lines()
         }
