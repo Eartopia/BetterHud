@@ -12,3 +12,28 @@ eartopia_hud_notice:
       split-width: 240
       line-width: 14
       force-split: true
+
+eartopia_status_panel:
+  offset: left
+  align: left
+  texts:
+    1:
+      name: eartopia_hud_text
+      pattern: "Eartopia"
+      x: 0
+      y: 0
+      scale: 0.8
+      align: left
+      color: "#F8F0D8"
+      outline: true
+      layer: 1
+    2:
+      name: eartopia_hud_text
+      pattern: "HUD ONLINE"
+      x: 0
+      y: 12
+      scale: 0.55
+      align: left
+      color: "#9EE8D0"
+      outline: true
+      layer: 1

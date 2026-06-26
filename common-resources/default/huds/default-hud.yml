@@ -16,3 +16,15 @@ test_hud:
       pixel:
         x: 0
         y: -80
+
+eartopia_status_hud:
+  tick: 20
+  layouts:
+    1:
+      name: eartopia_status_panel
+      gui:
+        x: 0
+        y: 0
+      pixel:
+        x: 14
+        y: 30
