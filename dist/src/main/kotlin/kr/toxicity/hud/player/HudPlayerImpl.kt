@@ -34,21 +34,28 @@ abstract class HudPlayerImpl : HudPlayer {
         it.name
     })
 
-    private val task = HudPlayerTask {
-        val speed = ConfigManagerImpl.tickSpeed
-        if (speed > 0) hudUpdateTask(speed) {
-            update()
-        } else null
-    }
-    private val autoSave = HudPlayerTask {
-        asyncTaskTimer(ConfigManagerImpl.autoSaveTime, ConfigManagerImpl.autoSaveTime) {
-            save()
+    private lateinit var task: HudPlayerTask
+    private lateinit var autoSave: HudPlayerTask
+    private lateinit var locationProvide: HudPlayerTask
+
+    protected fun initializeTasks() {
+        if (::task.isInitialized) return
+        task = HudPlayerTask {
+            val speed = ConfigManagerImpl.tickSpeed
+            if (speed > 0) hudUpdateTask(speed) {
+                update()
+            } else null
         }
-    }
-    private val locationProvide = HudPlayerTask {
-        val speed = ConfigManagerImpl.locationProvideTime
-        hudLocationProvideTask(speed) {
-            PlayerManagerImpl.provideLocation(this)
+        autoSave = HudPlayerTask {
+            asyncTaskTimer(ConfigManagerImpl.autoSaveTime, ConfigManagerImpl.autoSaveTime) {
+                save()
+            }
+        }
+        locationProvide = HudPlayerTask {
+            val speed = ConfigManagerImpl.locationProvideTime
+            hudLocationProvideTask(speed) {
+                PlayerManagerImpl.provideLocation(this)
+            }
         }
     }
 
@@ -58,6 +65,9 @@ abstract class HudPlayerImpl : HudPlayer {
 
     protected open fun hudLocationProvideTask(speed: Long, block: () -> Unit): HudTask {
         return asyncTaskTimer(speed, speed, block)
+    }
+
+    protected open fun cancelPlatformTasks() {
     }
 
     protected fun inject() {
@@ -83,11 +93,11 @@ abstract class HudPlayerImpl : HudPlayer {
     final override fun getPointedLocation(): MutableSet<PointedLocation> = locationSet
 
     final override fun cancelTick() {
-        task.cancel()
+        if (::task.isInitialized) task.cancel()
     }
 
     final override fun startTick() {
-        task.restart()
+        if (::task.isInitialized) task.restart() else initializeTasks()
     }
 
     final override fun getPopupGroupIteratorMap(): MutableMap<String, PopupIteratorGroup> = popupGroup
@@ -156,6 +166,7 @@ abstract class HudPlayerImpl : HudPlayer {
     }
 
     override fun reload() {
+        initializeTasks()
         autoSave.restart()
         locationProvide.restart()
         startTick()
@@ -175,14 +186,15 @@ abstract class HudPlayerImpl : HudPlayer {
     }
 
     final override fun cancel() {
+        cancelPlatformTasks()
         popupGroup.forEach {
             it.value.clear()
         }
         VOLATILE_CODE.removeBossBar(this)
         showingEmpty = true
         cancelTick()
-        autoSave.cancel()
-        locationProvide.cancel()
+        if (::autoSave.isInitialized) autoSave.cancel()
+        if (::locationProvide.isInitialized) locationProvide.cancel()
     }
 
     override fun type(): SenderType = SenderType.PLAYER

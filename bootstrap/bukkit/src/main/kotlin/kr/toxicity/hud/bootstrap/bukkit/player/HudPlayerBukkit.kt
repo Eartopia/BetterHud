@@ -18,6 +18,8 @@ class HudPlayerBukkit(
     private val player: Player,
     private val audience: Audience
 ) : HudPlayerImpl() {
+    private var bossBarRestoreTask: HudTask? = null
+
     override fun uuid(): UUID = player.uniqueId
     override fun name(): String = player.name
     override fun handle(): Any = player
@@ -49,11 +51,19 @@ class HudPlayerBukkit(
     }
 
     override fun hudUpdateTask(speed: Long, block: () -> Unit): HudTask {
-        return foliaPlayerTaskTimer(1, speed, block) ?: super.hudUpdateTask(speed, block)
+        val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
+        if (!bootstrap.isFolia()) {
+            return super.hudUpdateTask(speed, block)
+        }
+        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, player, 1, speed, block) ?: CANCELLED_TASK
     }
 
     override fun hudLocationProvideTask(speed: Long, block: () -> Unit): HudTask {
-        return foliaPlayerTaskTimer(speed, speed, block) ?: super.hudLocationProvideTask(speed, block)
+        val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
+        if (!bootstrap.isFolia()) {
+            return super.hudLocationProvideTask(speed, block)
+        }
+        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, player, speed, speed, block) ?: CANCELLED_TASK
     }
 
     override fun reload() {
@@ -66,9 +76,11 @@ class HudPlayerBukkit(
         initBossBar {
             inject()
         }
+        initializeTasks()
     }
 
     private fun initBossBar(action: () -> Unit) {
+        cancelPlatformTasks()
         val bars = ArrayList<BossBar>()
         for (bossBar in Bukkit.getBossBars()) {
             if (bossBar.players.any {
@@ -79,28 +91,39 @@ class HudPlayerBukkit(
             }
         }
         action()
-        playerTaskLater(20) {
+        var scheduled: HudTask? = null
+        scheduled = playerTaskLater(20) {
             bars.forEach {
                 it.addPlayer(player)
             }
+            if (bossBarRestoreTask === scheduled) {
+                bossBarRestoreTask = null
+            }
         }
+        bossBarRestoreTask = scheduled
     }
 
     override fun hasPermission(perm: String): Boolean = player.hasPermission(perm)
 
-    private fun foliaPlayerTaskTimer(delay: Long, period: Long, block: () -> Unit): HudTask? {
-        val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
-        if (!bootstrap.isFolia()) {
-            return null
-        }
-        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, player, delay, period, block)
+    override fun cancelPlatformTasks() {
+        bossBarRestoreTask?.cancel()
+        bossBarRestoreTask = null
     }
 
-    private fun playerTaskLater(delay: Long, block: () -> Unit) {
+    private fun playerTaskLater(delay: Long, block: () -> Unit): HudTask {
         val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
-        if (bootstrap.isFolia() && FoliaSchedulerReflection.runDelayed(bootstrap, player, delay, block)) {
-            return
+        if (bootstrap.isFolia()) {
+            return FoliaSchedulerReflection.runDelayed(bootstrap, player, delay, block) ?: CANCELLED_TASK
         }
-        taskLater(delay, block)
+        return taskLater(delay, block)
+    }
+
+    companion object {
+        private val CANCELLED_TASK = object : HudTask {
+            override fun isCancelled(): Boolean = true
+
+            override fun cancel() {
+            }
+        }
     }
 }

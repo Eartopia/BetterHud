@@ -32,6 +32,7 @@ class HudPlayerVelocity(
 
     init {
         inject()
+        initializeTasks()
     }
 
     override fun locale(): Locale = player.effectiveLocale ?: Locale.US

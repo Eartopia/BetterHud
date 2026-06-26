@@ -40,6 +40,7 @@ class HudPlayerFabric(
         initBossBar {
             inject()
         }
+        initializeTasks()
     }
 
     override fun reload() {

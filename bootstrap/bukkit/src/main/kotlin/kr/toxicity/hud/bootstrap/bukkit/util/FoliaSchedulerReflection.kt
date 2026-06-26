@@ -64,9 +64,9 @@ internal object FoliaSchedulerReflection {
         }.getOrDefault(false)
     }
 
-    fun runDelayed(plugin: Plugin, player: Player, delay: Long, block: () -> Unit): Boolean {
+    fun runDelayed(plugin: Plugin, player: Player, delay: Long, block: () -> Unit): HudTask? {
         return runCatching {
-            runDelayedMethod.invoke(
+            val task = runDelayedMethod.invoke(
                 getSchedulerMethod.invoke(player),
                 plugin,
                 Consumer<Any> {
@@ -74,9 +74,9 @@ internal object FoliaSchedulerReflection {
                 },
                 null,
                 delay
-            )
-            true
-        }.getOrDefault(false)
+            ) ?: return@runCatching null
+            ReflectionHudTask(task)
+        }.getOrNull()
     }
 
     fun runAtFixedRate(plugin: Plugin, player: Player, delay: Long, period: Long, block: () -> Unit): HudTask? {
@@ -90,7 +90,7 @@ internal object FoliaSchedulerReflection {
                 null,
                 delay,
                 period
-            )
+            ) ?: return@runCatching null
             ReflectionHudTask(task)
         }.getOrNull()
     }
