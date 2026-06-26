@@ -1,6 +1,7 @@
 package kr.toxicity.hud.nms.v1_21_R2
 
 import com.mojang.authlib.GameProfile
+import com.mojang.brigadier.tree.CommandNode
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelDuplexHandler
@@ -119,6 +120,7 @@ class NMSImpl : NMS {
 
     override fun registerCommand(module: CommandModule<BetterCommandSource>) {
         val dispatcher = (Bukkit.getServer() as CraftServer).server.commands.dispatcher
+        clearExistingCommandNodes(dispatcher.root)
         val bootstrap = BetterHudAPI.inst().bootstrap()
         module.build { s: CommandSourceStack ->
             when (val sender = s.bukkitSender) {
@@ -128,6 +130,19 @@ class NMSImpl : NMS {
             }
         }.forEach {
             dispatcher.register(it)
+        }
+    }
+
+    private fun clearExistingCommandNodes(root: CommandNode<CommandSourceStack>) {
+        listOf("hud", "betterhud", "bh").forEach { name ->
+            listOf("children", "literals", "arguments").forEach { fieldName ->
+                runCatching {
+                    val field = CommandNode::class.java.getDeclaredField(fieldName)
+                    field.isAccessible = true
+                    @Suppress("UNCHECKED_CAST")
+                    (field.get(root) as? MutableMap<String, *>)?.remove(name)
+                }
+            }
         }
     }
 
