@@ -149,7 +149,7 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
                 if (it.async && !isFolia) it(player) else syncTask.add(it)
             }
             if (syncTask.isEmpty()) return
-            val handle = player.handle()
+            val handle = if (player is HudPlayerBukkit) player.schedulerPlayer() else player.handle()
             if (isFolia && handle is Player && FoliaSchedulerReflection.execute(this@BukkitBootstrapImpl, handle, 1L) {
                     syncTask.forEach {
                         it(player)
@@ -303,7 +303,7 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
         if (ConfigManagerImpl.disableToBedrockPlayer && bedrockAdapter.isBedrockPlayer(player.uniqueId)) return
         val adaptedPlayer = if (isFolia) nms.getFoliaAdaptedPlayer(player) else player
         val audience = PlayerManagerImpl.addHudPlayer(adaptedPlayer.uniqueId) {
-            val impl = HudPlayerBukkit(adaptedPlayer, if (player is Audience) player else audiences.player(player))
+            val impl = HudPlayerBukkit(adaptedPlayer, if (player is Audience) player else audiences.player(player), player)
             asyncTask {
                 DatabaseManagerImpl.currentDatabase.load(impl)
                 task {

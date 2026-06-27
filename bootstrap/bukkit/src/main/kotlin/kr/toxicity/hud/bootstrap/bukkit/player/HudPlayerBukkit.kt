@@ -16,7 +16,8 @@ import java.util.*
 
 class HudPlayerBukkit(
     private val player: Player,
-    private val audience: Audience
+    private val audience: Audience,
+    private val schedulerPlayer: Player = player
 ) : HudPlayerImpl() {
     private var bossBarRestoreTask: HudTask? = null
 
@@ -55,7 +56,7 @@ class HudPlayerBukkit(
         if (!bootstrap.isFolia()) {
             return super.hudUpdateTask(speed, block)
         }
-        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, player, 1, speed, block) ?: CANCELLED_TASK
+        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, schedulerPlayer, 1, speed, block) ?: CANCELLED_TASK
     }
 
     override fun hudLocationProvideTask(speed: Long, block: () -> Unit): HudTask {
@@ -63,7 +64,7 @@ class HudPlayerBukkit(
         if (!bootstrap.isFolia()) {
             return super.hudLocationProvideTask(speed, block)
         }
-        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, player, speed, speed, block) ?: CANCELLED_TASK
+        return FoliaSchedulerReflection.runAtFixedRate(bootstrap, schedulerPlayer, speed, speed, block) ?: CANCELLED_TASK
     }
 
     override fun reload() {
@@ -84,9 +85,9 @@ class HudPlayerBukkit(
         val bars = ArrayList<BossBar>()
         for (bossBar in Bukkit.getBossBars()) {
             if (bossBar.players.any {
-                it.uniqueId == player.uniqueId
+                it.uniqueId == schedulerPlayer.uniqueId
             }) {
-                bossBar.removePlayer(player)
+                bossBar.removePlayer(schedulerPlayer)
                 bars += bossBar
             }
         }
@@ -94,7 +95,7 @@ class HudPlayerBukkit(
         var scheduled: HudTask? = null
         scheduled = playerTaskLater(20) {
             bars.forEach {
-                it.addPlayer(player)
+                it.addPlayer(schedulerPlayer)
             }
             if (bossBarRestoreTask === scheduled) {
                 bossBarRestoreTask = null
@@ -113,10 +114,12 @@ class HudPlayerBukkit(
     private fun playerTaskLater(delay: Long, block: () -> Unit): HudTask {
         val bootstrap = BOOTSTRAP as BukkitBootstrapImpl
         if (bootstrap.isFolia()) {
-            return FoliaSchedulerReflection.runDelayed(bootstrap, player, delay, block) ?: CANCELLED_TASK
+            return FoliaSchedulerReflection.runDelayed(bootstrap, schedulerPlayer, delay, block) ?: CANCELLED_TASK
         }
         return taskLater(delay, block)
     }
+
+    fun schedulerPlayer(): Player = schedulerPlayer
 
     companion object {
         private val CANCELLED_TASK = object : HudTask {
