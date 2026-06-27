@@ -20,27 +20,27 @@ test_hud:
 eartopia_status_hud:
   tick: 1
   layouts:
-	    1:
-	      name: eartopia_slots_left
-	      gui:
-	        x: 8
-	        y: 0
-	      pixel:
-	        x: 0
-	        y: 46
-	    2:
-	      name: eartopia_slots_center
-	      gui:
-	        x: 50
-	        y: 0
-	      pixel:
-	        x: 0
-	        y: 54
-	    3:
-	      name: eartopia_slots_right
-	      gui:
-	        x: 92
-	        y: 0
-	      pixel:
-	        x: 0
-	        y: 46
+    1:
+      name: eartopia_slots_left
+      gui:
+        x: 8
+        y: 0
+      pixel:
+        x: 0
+        y: 46
+    2:
+      name: eartopia_slots_center
+      gui:
+        x: 50
+        y: 0
+      pixel:
+        x: 0
+        y: 54
+    3:
+      name: eartopia_slots_right
+      gui:
+        x: 92
+        y: 0
+      pixel:
+        x: 0
+        y: 46

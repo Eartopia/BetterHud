@@ -62,9 +62,9 @@ eartopia_slots_center:
       line-align: center
       color: "#F7F4EA"
       outline: true
-      line: 1
-      split-width: 520
-      line-width: 40
+      line: 2
+      split-width: 360
+      line-width: 22
       force-split: false
       layer: 1
 
