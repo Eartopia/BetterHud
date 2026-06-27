@@ -166,6 +166,16 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
         }
     }
 
+    private fun executePlayerTask(player: Player, playerLabel: String, block: () -> Unit) {
+        if (isFolia) {
+            if (!FoliaSchedulerReflection.execute(this@BukkitBootstrapImpl, player, 1L, block)) {
+                warn("Unable to schedule BetterHud player task for $playerLabel; skipping unsafe global fallback.")
+            }
+            return
+        }
+        task(block)
+    }
+
     private lateinit var nms: NMS
 
     private val bedrockAdapter by lazy {
@@ -301,12 +311,12 @@ class BukkitBootstrapImpl : BukkitBootstrap, JavaPlugin() {
     fun register(player: Player) {
         if (!player.isOnline) return
         if (ConfigManagerImpl.disableToBedrockPlayer && bedrockAdapter.isBedrockPlayer(player.uniqueId)) return
-        val adaptedPlayer = if (isFolia) nms.getFoliaAdaptedPlayer(player) else player
-        val audience = PlayerManagerImpl.addHudPlayer(adaptedPlayer.uniqueId) {
-            val impl = HudPlayerBukkit(adaptedPlayer, if (player is Audience) player else audiences.player(player), player)
+        val playerLabel = player.uniqueId.toString()
+        val audience = PlayerManagerImpl.addHudPlayer(player.uniqueId) {
+            val impl = HudPlayerBukkit(player, if (player is Audience) player else audiences.player(player))
             asyncTask {
                 DatabaseManagerImpl.currentDatabase.load(impl)
-                task {
+                executePlayerTask(player, playerLabel) {
                     sendResourcePack(impl)
                     player.updateCommands()
                     HudPlayerJoinEvent(impl).call()
