@@ -74,7 +74,11 @@ void main() {
     vec3 color = Color.xyz;
     applyColor = 0;
     vertexColor = Color * sample_lightmap(Sampler2, UV2);
-    if (pos.y >= ui.y && ProjMat[3].x == -1) {
+    bool betterHudGuiProjection = abs(ProjMat[3].x + 1.0) < 0.01
+        && abs(ProjMat[3].y - 1.0) < 0.01
+        && ProjMat[0][0] > 0.0
+        && ProjMat[1][1] < 0.0;
+    if (betterHudGuiProjection && pos.y >= ui.y) {
         int bit = int(pos.y) >> HEIGHT_BIT;
 
         if (((bit >> MAX_BIT) & 1) == 1) {
