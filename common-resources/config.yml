@@ -21,8 +21,7 @@ self-host-ip: "*"
 self-host-port: 8163
 merge-other-folders: []
 loading-head: random #steve, alex, etc.
-default-hud:
-  - eartopia_status_hud
+default-hud: []
 default-popup: []
 default-compass: []
 load-minecraft-default-textures: false

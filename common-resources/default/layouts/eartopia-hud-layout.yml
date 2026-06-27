@@ -13,27 +13,82 @@ eartopia_hud_notice:
       line-width: 14
       force-split: true
 
-eartopia_status_panel:
+eartopia_slots_left:
   offset: left
   align: left
   texts:
     1:
       name: eartopia_hud_text
-      pattern: "Eartopia"
+      pattern: "[string:eartopia_hud_left_1]"
       x: 0
       y: 0
-      scale: 0.8
+      scale: 0.62
       align: left
       color: "#F8F0D8"
       outline: true
       layer: 1
     2:
       name: eartopia_hud_text
-      pattern: "HUD ONLINE"
+      pattern: "[string:eartopia_hud_left_2]"
       x: 0
-      y: 12
-      scale: 0.55
+      y: 10
+      scale: 0.62
       align: left
       color: "#9EE8D0"
+      outline: true
+      layer: 1
+    3:
+      name: eartopia_hud_text
+      pattern: "[string:eartopia_hud_left_3]"
+      x: 0
+      y: 20
+      scale: 0.62
+      align: left
+      color: "#FFD8A8"
+      outline: true
+      layer: 1
+
+eartopia_slots_center:
+  offset: center
+  align: center
+  texts:
+    1:
+      name: eartopia_hud_text
+      pattern: "[string:eartopia_hud_center]"
+      x: 0
+      y: 0
+      scale: 0.72
+      align: center
+      line-align: center
+      color: "#F7F4EA"
+      outline: true
+      line: 2
+      split-width: 300
+      line-width: 13
+      force-split: false
+      layer: 1
+
+eartopia_slots_right:
+  offset: right
+  align: right
+  texts:
+    1:
+      name: eartopia_hud_text
+      pattern: "[string:eartopia_hud_right_1]"
+      x: 0
+      y: 0
+      scale: 0.62
+      align: right
+      color: "#D8ECFF"
+      outline: true
+      layer: 1
+    2:
+      name: eartopia_hud_text
+      pattern: "[string:eartopia_hud_right_2]"
+      x: 0
+      y: 10
+      scale: 0.62
+      align: right
+      color: "#BEEEDB"
       outline: true
       layer: 1
